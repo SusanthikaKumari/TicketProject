@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: TicketProject
+
+  datasource:
+    url: jdbc:postgresql://localhost:5442/ticket_db
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  web:
+    error:
+      include-message: always
