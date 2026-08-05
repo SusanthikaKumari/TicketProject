@@ -1,18 +1,37 @@
-version: "3.9"
 services:
   postgres:
     image: postgres:16
-    container_name: ticket-project
+    container_name: ticket-project-db
     restart: always
     environment:
       POSTGRES_DB: ticket_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-
     ports:
       - "5442:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ticket_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ticket-project-app
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ticket_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    ports:
+      - "8080:8080"
 
 volumes:
   postgres_data:

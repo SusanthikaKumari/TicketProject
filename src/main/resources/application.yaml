@@ -1,11 +1,14 @@
+server:
+  port: ${SERVER_PORT:8080}
+
 spring:
   application:
     name: TicketProject
 
   datasource:
-    url: jdbc:postgresql://localhost:5442/ticket_db
-    username: postgres
-    password: password
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5442/ticket_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
     driver-class-name: org.postgresql.Driver
 
   jpa:
