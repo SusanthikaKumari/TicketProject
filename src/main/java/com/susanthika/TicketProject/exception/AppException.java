@@ -2,7 +2,6 @@ package com.susanthika.TicketProject.exception;
 
 import lombok.Getter;
 
-import javax.lang.model.type.ErrorType;
 import java.util.HashMap;
 import java.util.Map;
 
