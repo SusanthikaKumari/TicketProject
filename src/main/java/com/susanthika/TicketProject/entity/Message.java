@@ -27,4 +27,13 @@ public class Message extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id", nullable = false)
     private User sender;
+
+
+//LAZY loads the whole Ticket entity only when it is needed (LAZY = later)
+//message.getTicket();
+
+//then it fetches the entire Ticket object (all its fields), not just the ticket ID.
+
+//EAGER loads the whole Ticket entity immediately when the Message is fetched. (EAGER = immediately)
+
 }

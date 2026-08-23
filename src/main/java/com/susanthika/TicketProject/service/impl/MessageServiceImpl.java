@@ -6,6 +6,7 @@ import com.susanthika.TicketProject.dto.response.MessageResponse;
 import com.susanthika.TicketProject.entity.Message;
 import com.susanthika.TicketProject.entity.Ticket;
 import com.susanthika.TicketProject.entity.User;
+import com.susanthika.TicketProject.exception.BadRequestException;
 import com.susanthika.TicketProject.exception.ResourceNotFoundException;
 import com.susanthika.TicketProject.repository.MessageRepository;
 import com.susanthika.TicketProject.repository.TicketRepository;
@@ -13,6 +14,8 @@ import com.susanthika.TicketProject.repository.UserRepository;
 import com.susanthika.TicketProject.service.MessageService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,20 +30,25 @@ public class MessageServiceImpl implements MessageService {
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
 
-    private static final Long DEFAULT_CUSTOMER_ID = 4L;
-    private static final Long DEFAULT_ADMIN_ID =6L;
-
 
     @Override
     public MessageResponse sendCustomerMessage(MessageRequest messageRequest) {
         Ticket ticket = ticketRepository.findTicketByTicketCode(messageRequest.getTicketCode())
                 .orElseThrow(()-> new ResourceNotFoundException("Ticket not found: "+ messageRequest.getTicketCode()));
 
-        User customer = userRepository.findById(DEFAULT_CUSTOMER_ID)
-                .orElseThrow(()-> new ResourceNotFoundException("Default customer not found"));
-
+        User customer = getCurrentUser();
+/*
         if (!"CUSTOMER".equalsIgnoreCase(customer.getRole().getRoleName())){
-            throw new IllegalArgumentException("User is not a customer");
+            throw new BadRequestException("User is not a customer");
+        }
+ */
+        if (!customer.getRole().isCustomer()) {
+            throw new BadRequestException("User is not a customer");
+        }
+
+        if (!ticket.getCustomer().getId().equals(customer.getId())) {
+            throw new BadRequestException(
+                    "You can only send messages to your own ticket");
         }
 
         Message message = modelMapper.map(messageRequest, Message.class);
@@ -56,19 +64,18 @@ public class MessageServiceImpl implements MessageService {
         Ticket ticket = ticketRepository.findTicketByTicketCode(messageRequest.getTicketCode())
                 .orElseThrow(()-> new ResourceNotFoundException("Ticket not found: " + messageRequest.getTicketCode()));
 
-        User admin = userRepository.findById(DEFAULT_ADMIN_ID)
-                .orElseThrow(()-> new ResourceNotFoundException("Default admin not found"));
+        User admin = getCurrentUser();
 
-        if (!"ADMIN".equalsIgnoreCase(admin.getRole().getRoleName())){
-            throw new IllegalArgumentException("User is not an admin");
+        if (!admin.getRole().isAdmin()) {
+            throw new BadRequestException("User is not an admin");
         }
 
         if (ticket.getAssignedAdminAgent()==null){
-            throw new IllegalArgumentException("No admin assigned to this ticket");
+            throw new BadRequestException("No admin assigned to this ticket");
         }
 
         if (!ticket.getAssignedAdminAgent().getId().equals(admin.getId())){
-            throw new IllegalArgumentException("Only assigned admin can reply to this ticket");
+            throw new BadRequestException("Only assigned admin can reply to this ticket");
         }
 
         Message message = modelMapper.map(messageRequest, Message.class);
@@ -92,14 +99,24 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public MessageResponse updateCustomerMessage(Long messageId, MessageUpdateRequest messageUpdateRequest) {
-        return updateMessage(messageId, messageUpdateRequest, DEFAULT_CUSTOMER_ID);
+
+        User customer = getCurrentUser();
+        return updateMessage(messageId, messageUpdateRequest, customer);
     }
 
     @Override
     public MessageResponse updateAdminMessage(Long messageId, MessageUpdateRequest messageUpdateRequest) {
-        return updateMessage(messageId, messageUpdateRequest, DEFAULT_ADMIN_ID);
+
+        User admin = getCurrentUser();
+        return updateMessage(messageId, messageUpdateRequest, admin);
     }
 
+    private User getCurrentUser() {
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        return (User) authentication.getPrincipal();
+    }
 
     private MessageResponse mapToResponse(Message message){
         MessageResponse response = modelMapper.map(message, MessageResponse.class);
@@ -111,16 +128,16 @@ public class MessageServiceImpl implements MessageService {
     }
 
 
-    private MessageResponse updateMessage(Long messageId, MessageUpdateRequest messageUpdateRequest, Long senderId){
+    private MessageResponse updateMessage(Long messageId, MessageUpdateRequest messageUpdateRequest, User currentUser){
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(()-> new ResourceNotFoundException("Message not found"));
 
-        if (!message.getSender().getId().equals(senderId)){
-            throw new IllegalArgumentException("You can only edit your messages");
+        if (!message.getSender().getId().equals(currentUser.getId())){
+            throw new BadRequestException("You can only edit your messages");
         }
 
         if (LocalDateTime.now().isAfter(message.getCreatedAt().plusMinutes(5))){
-            throw new IllegalArgumentException("Message can only edited within 5 minutes");
+            throw new BadRequestException("Message can only edited within 5 minutes");
         }
 
         message.setMessage(messageUpdateRequest.getMessage());

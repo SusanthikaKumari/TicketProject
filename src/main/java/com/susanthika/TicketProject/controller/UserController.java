@@ -2,11 +2,15 @@ package com.susanthika.TicketProject.controller;
 
 import com.susanthika.TicketProject.dto.request.UserRequest;
 import com.susanthika.TicketProject.dto.request.UserUpdateRequest;
+import com.susanthika.TicketProject.dto.response.ApiResponse;
 import com.susanthika.TicketProject.dto.response.UserResponse;
 import com.susanthika.TicketProject.service.UserService;
+import com.susanthika.TicketProject.util.ApiResponseUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,34 +22,69 @@ public class UserController {
 
     private final UserService userService;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public UserResponse getUserById(@PathVariable Long id){
-        return userService.findUserById(id);
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable("id") Long id){
+        UserResponse response = userService.findUserById(id);
+        return ResponseEntity.ok(
+                ApiResponseUtil.success(
+                        "User retrieved successfully",
+                        response
+                )
+        );
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
-    public List<UserResponse> getAllUsers(){
-        return userService.findAllUsers();
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers(){
+        List<UserResponse> response = userService.findAllUsers();
+
+        String message = response.isEmpty() ? "No User found" : "Users retrieved successfully";
+
+        return ResponseEntity.ok(
+                ApiResponseUtil.success(
+                       message,
+                       response
+                )
+        );
     }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse createUser(@Valid @RequestBody UserRequest userRequest){
-        return userService.createUser(userRequest);
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
+    @PostMapping("/admin")
+    public ResponseEntity<ApiResponse<UserResponse>> createUser(@Valid @RequestBody UserRequest userRequest){
+        UserResponse response = userService.createUser(userRequest);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(
+                        ApiResponseUtil.success(
+                                "User created successfully",
+                                response,
+                                HttpStatus.CREATED
+                        )
+                );
     }
 
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     @PutMapping("/{id}")
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateRequest userUpdateRequest){
-        return userService.updateUser(id, userUpdateRequest);
+    public ResponseEntity<ApiResponse<UserResponse>> updateUser(@PathVariable("id") Long id, @Valid @RequestBody UserUpdateRequest userUpdateRequest){
+        UserResponse response = userService.updateUser(id, userUpdateRequest);
+        return ResponseEntity.ok(
+                ApiResponseUtil.success(
+                        "User updated successfully",
+                        response
+                )
+        );
     }
 
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable Long id){
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable("id") Long id){
         userService.deleteUserById(id);
+        return ResponseEntity.ok(
+                ApiResponseUtil.success(
+                        "User deleted successfully",
+                        null
+                )
+        );
     }
 
 }

@@ -21,7 +21,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public RoleResponse findRoleById(Long id) {
-        Role roleResponse = roleRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Role not found"));
+        Role roleResponse = roleRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Role not found" + id));
         return modelMapper.map(roleResponse, RoleResponse.class);
     }
 

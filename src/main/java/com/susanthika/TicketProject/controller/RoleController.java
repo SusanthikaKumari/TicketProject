@@ -1,10 +1,15 @@
 package com.susanthika.TicketProject.controller;
 
 import com.susanthika.TicketProject.dto.request.RoleRequest;
+import com.susanthika.TicketProject.dto.response.ApiResponse;
 import com.susanthika.TicketProject.dto.response.RoleResponse;
 import com.susanthika.TicketProject.service.RoleService;
+import com.susanthika.TicketProject.util.ApiResponseUtil;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,33 +21,69 @@ public class RoleController {
 
     private final RoleService roleService;
 
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public RoleResponse getRoleById(@PathVariable Long id){
-        return roleService.findRoleById(id);
+    public ResponseEntity<ApiResponse<RoleResponse>> findRoleById(@PathVariable("id") Long id){
+        RoleResponse response = roleService.findRoleById(id);
+        return ResponseEntity.ok(
+                ApiResponseUtil.success(
+                        "Role retrieved successfully",
+                        response
+                )
+        );
     }
 
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
-    private List<RoleResponse> getAllRoles(){
-        return roleService.findAllRoles();
+    public ResponseEntity<ApiResponse<List<RoleResponse>>> findAllRoles(){
+        List<RoleResponse> response = roleService.findAllRoles();
+
+        String message = response.isEmpty() ? "No roles found" : "Roles retrieved successfully";
+
+        return ResponseEntity.ok(
+                ApiResponseUtil.success(
+                        message,
+                        response
+                )
+        );
     }
 
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    private RoleResponse createRole(@RequestBody RoleRequest roleRequest){
-        return roleService.createRole(roleRequest);
+    public ResponseEntity<ApiResponse<RoleResponse>> createRole(@Valid @RequestBody RoleRequest roleRequest){
+         RoleResponse response = roleService.createRole(roleRequest);
+         return ResponseEntity.status(HttpStatus.CREATED)
+                 .body(
+                         ApiResponseUtil.success(
+                                 "Role created successfully",
+                                 response,
+                                 HttpStatus.CREATED
+                         )
+                 );
     }
 
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     @PutMapping("/{id}")
-    @ResponseStatus(HttpStatus.CREATED)
-    public RoleResponse updateRole(@PathVariable Long id, @RequestBody RoleRequest roleRequest){
-        return roleService.updateRole(id, roleRequest);
+    public ResponseEntity<ApiResponse<RoleResponse>> updateRole(@PathVariable("id") Long id, @Valid @RequestBody RoleRequest roleRequest){
+        RoleResponse response = roleService.updateRole(id, roleRequest);
+        return ResponseEntity.ok(
+                ApiResponseUtil.success(
+                        "Role updated successfully",
+                        response
+                )
+        );
     }
 
+    @PreAuthorize("hasRole('ADMINISTRATOR')")
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteRole(@PathVariable Long id){
+    public ResponseEntity<ApiResponse<Void>> deleteRole(@PathVariable("id") Long id){
         roleService.deleteRoleById(id);
+
+        return ResponseEntity.ok(
+                ApiResponseUtil.success(
+                        "Role deleted successfully",
+                        null
+                )
+        );
     }
 }

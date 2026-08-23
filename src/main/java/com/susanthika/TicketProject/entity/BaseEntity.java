@@ -7,12 +7,14 @@ import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 import java.time.LocalDateTime;
 
 @Data
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class) // enables automatic date tracking
+@EnableJpaAuditing
 public abstract class BaseEntity {
 
     @CreatedDate

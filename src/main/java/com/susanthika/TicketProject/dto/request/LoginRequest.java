@@ -10,29 +10,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class UserRequest {
-
-    @NotBlank(message = "First name is required")
-    @Size(max = 150)
-    private String firstName;
-
-    @NotBlank(message = "Last name is required")
-    @Size(max = 150)
-    private String lastName;
+public class LoginRequest {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email address")
+    //@CustomEmail(message = "Invalid email address")
     @Size(max = 200)
     private String email;
 
     @NotBlank(message = "Password is required")
     @Size(min = 8, max = 255, message = "Password must be between 8 and 255")
     private String password;
-
-    //@NotNull(message = "Role is required")
-    private Long roleId;
-
-    //@NotNull(message = "Department is required")
-    private Long departmentId;
-
 }

@@ -17,4 +17,16 @@ public class Role {
 
     @Column(name = "role_name", nullable = false, unique = true, length = 100)
     private String roleName;
+
+    public boolean isCustomer() {
+        return "CUSTOMER".equalsIgnoreCase(roleName);
+    }
+
+    public boolean isAdmin() {
+        return "ADMIN".equalsIgnoreCase(roleName);
+    }
+
+    public boolean isManager() {
+        return "MANAGER".equalsIgnoreCase(roleName);
+    }
 }
